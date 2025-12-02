@@ -1,0 +1,14 @@
+agent-framework
+openai
+
+azure-storage-blob
+azure-search-documents
+
+fastapi
+uvicorn
+
+python-dotenv
+pydantic
+pydantic-settings
+
+rich
