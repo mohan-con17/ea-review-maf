@@ -1,3 +1,4 @@
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI
 import logging
 
@@ -22,6 +23,20 @@ logger = logging.getLogger(__name__)
 logger.info("EA Review service starting up")
 
 app = FastAPI(title="EA Review BE Service - MAF")
+
+origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:3000",   # if you use 3000
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Register routers
 app.include_router(review_router)
