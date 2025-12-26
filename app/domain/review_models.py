@@ -3,6 +3,20 @@ from dataclasses import dataclass, field
 from typing import List, Optional, Dict, Any
 from enum import Enum
 
+@dataclass
+class AgentScore:
+    accuracy: float
+    bias: float
+    hallucination: float
+    confidence: float
+    notes: Dict[str, str]
+
+@dataclass
+class ReviewScores:
+    per_agent: Dict[str, AgentScore] = field(default_factory=dict)
+    overall: Dict[str, float] = field(default_factory=dict)
+    status: str = "success"   # success | failed
+    error: str | None = None
 
 class ReviewDecision(str, Enum):
     PROCEED = "proceed"
@@ -19,6 +33,16 @@ class ValidationIssue:
 class InputValidationResult:
     is_valid: bool
     issues: List[ValidationIssue]
+
+@dataclass
+class PreprocessedImage:
+    content_type: str                 # e.g. "image/png"
+    ext: str                          # e.g. "png", "jpg"
+    width: int
+    height: int
+    tiles: List[bytes]                # raw PNG/JPEG bytes per tile
+    tiles_x: int
+    tiles_y: int
 
 @dataclass
 class ArchitectureContext:
@@ -92,6 +116,10 @@ class ImageAnalysisResult:
     image_components_json: Dict[str, Any] = field(default_factory=dict)
 
 @dataclass
+class FormatterResult:
+    review_summary: Optional[str] = None
+
+@dataclass
 class ReviewSessionContext:
     """
     Single object that carries state from start to end of a review.
@@ -105,15 +133,17 @@ class ReviewSessionContext:
 
     # populated as pipeline runs
     validation_result: Optional[InputValidationResult] = None
+    
+    # NEW: non-LLM pre-processing output
+    preprocessed_image: Optional[PreprocessedImage] = None
 
     demographics_from_json: Optional[DemographicsResult] = None
     image_analysis: Optional[ImageAnalysisResult] = None
-    triage_results: Dict[str, Any] = field(default_factory=list)
+    triage_results: Dict[str, Any] = field(default_factory=dict)
     remediation_result: Optional[RemediationSnapshot] = None
-
-    # orchestration status tracker
-    # orchestrator_status: Dict[str, Any] = field(default_factory=lambda: {
-    #     "status": "pending",         # pending | success | failed
-    #     "errors": [],                # list of {step, message}
-    #     "completed_steps": []        # list of agent/stage names
-    # })
+    formatting_summary: Optional[FormatterResult] = None
+    
+    # per-agent SLA timing (MAF telemetry)
+    agent_sla: List[Dict[str, Any]] = field(default_factory=list)
+    llm_traces: List[Dict[str, Any]] = field(default_factory=list)
+    review_scores: ReviewScores | None = None
